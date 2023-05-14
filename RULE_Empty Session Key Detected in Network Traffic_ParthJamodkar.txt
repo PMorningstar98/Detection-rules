@@ -1,0 +1,46 @@
+Detection Name: Empty Session Key Detected in Network Traffic
+
+Technique ID: T1003
+Technique Name: Credential Dumping
+
+Author: Parth Jamodkar 
+
+Description:
+This detection rule is designed to detect the presence of empty session keys in the network traffic logs. An empty session key is indicative of a successful credential dump of a logged-in user's session key. Attackers can use this technique to obtain access to sensitive data or systems within the network.
+This query searches for empty session keys in the network traffic logs by filtering for relevant security events (Event ID 4624 with LogonType 3) and parsing the TargetUserName field to extract session ID and session key information. Events with empty session keys are then identified and flagged for further investigation.
+
+Impact:
+The presence of empty session keys in network traffic indicates that an attacker has successfully obtained access to a logged-in user's session key and potentially sensitive data or systems within the network.
+
+False Positive Analysis:
+In environments where legitimate use of session keys is expected, such as remote access software or VPN connections, this rule may trigger false positives. It is recommended to add exceptions based on user and command-line conditions to filter out known legitimate activity and reduce the number of false positives triggered by the rule. It is also important to review and update exceptions regularly to avoid missing any malicious activity.
+
+References:
+MITRE ATT&CK: https://attack.mitre.org/techniques/T1003/
+Microsoft Documentation: https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624
+
+Note: The template is based on the assumption that the rule is being used for detection of malicious activity. If the rule is being used for other purposes, the impact and false positive analysis may need to be adjusted accordingly.
+
+RULE:
+// Query for Hunting Empty Session Key in Traffic
+// This query searches for empty session keys in the network traffic logs
+
+// Set the time range and filter for relevant events
+let timeRange = 1d;
+let authEvents = SecurityEvent
+| where TimeGenerated > ago(timeRange)
+| where EventID == 4624 and LogonType == 3; // Adjust these values based on the relevant event
+
+// Parse the TargetUserName field to extract session ID and session key
+let parsedEvents = authEvents
+| extend sessionId = tostring(parse_json(TargetUserName).SessionId),
+         sessionKey = tostring(parse_json(TargetUserName).SessionKey);
+
+// Search for events with empty session keys
+let emptySessionKeyEvents = parsedEvents
+| where sessionId != "0" and sessionKey == "";
+
+// Output the results
+emptySessionKeyEvents
+| summarize count() by Computer, Account, LogonType
+| project Computer, Account, LogonType, "Empty Session Key Detected" = count_ > 0
