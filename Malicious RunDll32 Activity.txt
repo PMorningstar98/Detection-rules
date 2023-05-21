@@ -1,0 +1,49 @@
+
+
+Detection Name: Suspicious RunDll32.exe Activity
+Technique ID: T1218
+Technique Name: Signed Binary Proxy Execution: Rundll32
+Detection Intent: This query will  detect suspicious activities related to the execution of RunDll32.exe, which is commonly abused by adversaries for various malicious purposes such as process injection, network communication, and execution of potentially unwanted files.
+
+Author: Parth Jamodkar
+
+Description: This detection rule identifies suspicious activity involving the execution of rundll32.exe with potentially malicious command-line parameters. It looks for specific patterns related to known malicious activities, including process injection, network communication, and commands associated with Registry operations and Windows Management Instrumentation (WMI).
+
+Impact: The execution of malicious commands through rundll32.exe can lead to various security risks, including unauthorized access, information theft, malware installation, and system compromise.
+
+True Positive Analysis: A true positive is generated when the query detects instances of rundll32.exe being used with suspicious command-line parameters or engaging in suspicious activities related to process injection, network communication, Registry operations, or WMI. Further investigation is recommended to determine if the activity is indeed malicious.
+
+False Positive Analysis: Legitimate uses of RunDll32.exe with the included command lines or in specific contexts may generate false positives.understand system configuration, and user behavior before concluding an alert as a false positive.
+
+References: 
+- MITRE ATT&CK: T1218 - Signed Binary Proxy Execution: Rundll32
+- Microsoft Docs: RunDll32.exe
+- Microsoft Security Blog: Detecting Persistence Technique T1218: Signed Binary Proxy Execution
+- SANS Institute: Indicator of Compromise (IOC) Analysis with Security Information and Event Management (SIEM) Systems
+
+Rule: 
+
+SecurityEvent
+| where EventID == 4688 // Process creation event
+| where ProcessCommandLine contains "RunDll32.exe"
+| where (ProcessCommandLine contains "shell32.dll,Control_RunDLL appwiz.cpl,,0"
+        or ProcessCommandLine contains "InetCpl.cpl,ClearMyTracksByProcess"
+        or ProcessCommandLine contains "keymgr.dll,KRShowKeyMgr"
+        or ProcessCommandLine contains "shell32.dll,Control_RunDLL firewall.cpl"
+        or ProcessCommandLine contains_any(".dll", ".exe", ".scr", ".ocx", ".cpl", ".sys", ".drv", ".mui")
+        or (ProcessCommandLine contains_any("advpack.dll,LaunchINFSection", "shdocvw.dll,IEInstallScope", "printui.dll") and CommandLine !contains "rundll32.exe"))
+| where not (FolderPath contains "System32" or FolderPath contains "SysWOW64")
+| where not (ParentProcessName in ("explorer.exe", "rundll32.exe"))
+| where not (AccountName in ("Administrator", "SYSTEM", "LocalSystem"))
+| or (EventID == 3 // Network communication event
+        and Image == "rundll32.exe"
+        and (CommandLine contains "-urlcache"
+             or CommandLine contains "-download"
+             or CommandLine contains "-upload"
+             or CommandLine contains_any("-net", "-inet", "-http", "-https")))
+| or (EventID == 10 // Process injection event
+        and (ParentImage == "rundll32.exe"
+             or Image == "rundll32.exe")
+        and (CommandLine contains ".dll"
+             or CommandLine contains ".exe"))
+| project TimeGenerated, Computer, AccountName, ProcessCommandLine, ProcessId, ParentProcessId, Image, CommandLine, FolderPath, Company, Product
