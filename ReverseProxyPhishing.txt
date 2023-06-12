@@ -1,0 +1,45 @@
+
+
+Detection Name: ReverseProxyPhishing
+Technique ID: T1234
+Technique Name: Reverse Proxy Phishing
+Rule lang: YARA rule
+Detection Intent: Detecting reverse proxy phishing attacks in the network or web traffic.
+Author: Parth Jamodkar 
+
+Description:
+This detection rule aims to identify potential instances of reverse proxy phishing attacks. It examines URLs, domains, and other indicators to determine if a phishing attack is being conducted using reverse proxy techniques. By detecting such attacks early, security teams can respond promptly and mitigate potential risks.
+
+Impact:
+Reverse proxy phishing attacks can deceive users into interacting with malicious websites that mimic legitimate ones. These attacks can lead to the theft of sensitive information, such as login credentials, financial data, or personal information. Detecting and blocking such attacks can prevent data breaches, financial losses, and reputational damage.
+
+True Positive Analysis:
+When the rule triggers, it indicates the presence of a reverse proxy phishing attack. Security analysts should investigate the incident, gather more information about the attack, and initiate appropriate response and mitigation measures.
+
+False Positive Analysis:
+False positives may occur in cases where legitimate services or applications use similar patterns or keywords associated with reverse proxy phishing. It is important to fine-tune the rule based on the organization's specific environment, taking into consideration legitimate use cases to minimize false positives.
+
+Rule: 
+rule ReverseProxyPhishing {
+    meta:
+        description = "This rule detects reverse proxy phishing attacks."
+        author = "Parth"
+        date = "2023-06-11"
+        reference = "T1234"  // Technique ID
+    
+    strings:
+        $url = /https?:\/\/[^\/]+\/(.*)/
+        $domain = /[^\.]+\.[^\.]+/
+        $suspicious_keywords = /login|auth|signin|secure|password|credit|card|bank/i
+    
+    condition:
+        $url and $domain and $url !^ $domain and any of ($suspicious_keywords) in ($url, $domain) and $url !~ /\?/ and $domain !~ /^www\./
+}
+
+
+References:
+https://www.bleepingcomputer.com/news/security/mfa-adoption-pushes-phishing-actors-to-reverse-proxy-solutions/
+https://www.youtube.com/watch?v=yildvg4FJLU
+
+
+Note: If you encounter any false positives or have suggestions for improving the rule, please provide feedback to the author for further refinement.
