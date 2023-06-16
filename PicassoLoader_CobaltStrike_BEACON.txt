@@ -1,0 +1,32 @@
+Detection Name: PicassoLoader_CobaltStrike_BEACON
+
+Technique ID: T1086, T1170
+
+Technique Name:
+- T1086: PowerShell
+- T1170: Mshta
+
+Detection Intent: Detects the presence of PicassoLoader malware and Cobalt Strike Beacon in the environment, indicating a potential cyber attack by the UAC-0057 (GhostWriter) group.
+
+Author: Parth Jamodkar (do not modify this)
+
+Description:
+This detection rule aims to identify the activity related to the UAC-0057 (GhostWriter) group's cyber attack leveraging PicassoLoader malware and Cobalt Strike Beacon. The rule detects specific artifacts and behaviors associated with the attack's kill chain, enabling timely response and mitigation.
+
+Impact:
+If the detection is triggered, it indicates that an attacker from the UAC-0057 (GhostWriter) group has successfully compromised a system within the organization. The presence of PicassoLoader malware and Cobalt Strike Beacon suggests potential data exfiltration, lateral movement, and further malicious activities.
+
+True Positive Analysis:
+- Detection of the PicassoLoader malware artifact ("%APPDATA%\Signal_update_6.0.3.4\glkgh90kjykjkl650kj0.dll").
+- Detection of Cobalt Strike Beacon beaconing or communication with known C2 servers.
+- Execution of PowerShell commands or mshta.exe associated with the attack.
+
+False Positive Analysis:
+False positives may occur in scenarios where legitimate applications or system processes utilize similar techniques or artifacts. For example, the presence of certain PowerShell scripts or the use of mshta.exe for legitimate purposes may trigger false positives. Proper tuning and context analysis are necessary to minimize false positives.
+
+References:
+- UAC-0057 (GhostWriter) group: [Reference 1]
+- PicassoLoader malware: [Reference 2]
+- Cobalt Strike Beacon: [Reference 3]
+
+Note: If any additional information or specific references are available, they can be added to the "References" section for further context and research.
