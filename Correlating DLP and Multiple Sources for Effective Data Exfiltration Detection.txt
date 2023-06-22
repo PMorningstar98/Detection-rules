@@ -1,0 +1,59 @@
+The Power of Correlation: Strengthening Security with DLP and Threat Hunting in Splunk
+
+Introduction:
+Sensitive data exfiltration poses a significant threat to organizations. By leveraging correlation techniques, organizations can enhance their ability to detect and respond to such incidents. This article explores a correlation search that combines file activity, network traffic, and user behaviour analytics to identify potential data exfiltration events.
+
+Hypothesis 1: 
+Maximizing Threat Visibility: Correlating DLP and Multiple Sources for Effective Data Exfiltration Detection
+Correlation Search for Sensitive Data Exfiltration:
+To detect sensitive data exfiltration, the correlation search integrates data from three key sources: file activity, network traffic, and user behaviour analytics.
+
+File Activity:
+The search identifies events where a sensitive file is copied to a USB drive. Key conditions include:
+•	The source file path containing the name of a sensitive file.
+•	The destination file path indicating a USB drive.
+
+Network Traffic:
+The search identifies events where a user connects to a known data exfiltration range on port 445 (SMB). Key conditions include:
+•	The destination IP address falling within a known data exfiltration range.
+•	The source port being 445 (SMB).
+
+User Behaviour Analytics:
+The search identifies events where a user logs in from an unusual location to access a system containing sensitive data. Key conditions include:
+- The user logging into a system with sensitive data.
+- The user logging in from an unusual location.
+
+Alerting and Investigation:
+When the correlation score is high and the severity is set to "high," an alert is generated. The alert includes relevant details such as the correlation score, timestamps, source/destination IP addresses, user ID, system name, and login location. This information empowers the security team to initiate further investigation and respond promptly.
+
+Conclusion:
+The correlation search presented in this article highlights the effectiveness of combining file activity, network traffic, and user behaviour analytics to identify potential sensitive data exfiltration incidents. By leveraging correlation, organizations can enhance their security posture, detect threats that may otherwise remain unnoticed, and take proactive measures to protect their sensitive data.
+
+References: (there are not much resources on threat hunting using dlp logs yet) no ref for now.
+
+Hypothesis correlation search rule: 
+correlation Search 2: (index=file_activity | fields source_file_path, destination_file_path) | join [search index=network_traffic | fields destination_ip_address, source_port] (index=user_behavior_analytics | fields user_id, system_name, login_location) (index=dlp_logs | fields policy_violation, access_violation, sensitive_data_keyword) | join [search index=network_logs (unusual_traffic OR suspicious_IP OR file_transfer) AND source="internal_network" | fields unusual_traffic, suspicious_IP, file_transfer] | eval "correlation_score = count(file_copy) * count(network_connection) * count(user_login) * count(dlp_violations) * count(threat_hunting_indicators)" | stats count by correlation_score | lookup correlation_scores correlation_score | where severity="high" | outputlookup correlation_alerts
+
+Implementation in Splunk: 
+The step to create a dashboard to monitor the correlation search:
+1)	Create a new dashboard in Splunk
+2)	Add a new panel to the dashboard
+          In the panel,  
+                      select the "Correlation" option from the "Search" drop-down menu.
+                                                 In the "Correlation Search" field, enter the following search:
+
+(index=file_activity
+| fields source_file_path, destination_file_path)
+| join [search index=network_traffic
+| fields destination_ip_address, source_port]
+(index=user_behavior_analytics
+| fields user_id, system_name, login_location)
+(index=dlp_logs | fields policy_violation, access_violation, sensitive_data_keyword)
+| join [search index=network_logs (unusual_traffic OR suspicious_IP OR file_transfer) AND source="internal_network" | fields unusual_traffic, suspicious_IP, file_transfer]
+| eval "correlation_score = count(file_copy) * count(network_connection) * count(user_login) * count(dlp_violations) * count(threat_hunting_indicators)"
+| stats count by correlation_score
+| lookup correlation_scores correlation_score
+| where severity="high"
+| outputlookup correlation_alerts
+
+3)	Click the "Run" button.
