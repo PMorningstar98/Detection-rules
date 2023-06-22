@@ -1,0 +1,36 @@
+Detection Name: Powershell,MpCmdRun,WMIC_Exclusion_Detection
+Technique ID: T1234
+Technique Name: Exclusion Modification
+Detection Intent: To identify instances of exclusion modification performed using WMIC, PowerShell, or MpCmdRun.exe commands.
+Author: Parth Jamodkar 
+Description: This detection rule aims to identify the modification of exclusion paths in Windows Defender through the use of WMIC, PowerShell, or MpCmdRun.exe commands. It helps in detecting potential attempts to exclude specific files or directories from being scanned by Windows Defender.
+
+Impact: Exclusion modifications can be used by attackers to bypass antivirus scans and allow malicious files to go undetected, increasing the risk of compromise and unauthorized access.
+
+True Positive Analysis: If the rule triggers, it indicates that an exclusion path has been added using the specified commands, suggesting potential malicious activity. Further investigation is required to determine the nature and intent of the exclusion.
+
+False Positive Analysis: Legitimate exclusion modifications performed by authorized system administrators or security tools can trigger this rule. It is essential to validate the context and intent behind the exclusion modification before confirming a false positive.
+
+References: 
+- T1234: https://attack.mitre.org/techniques/T1234/
+- Windows Defender Exclusion documentation: [Add-MpPreference](https://docs.microsoft.com/powershell/module/defender/add-mppreference)
+
+Rule: 
+
+rule WMIC_Exclusion {
+meta:
+description = "Detects exclusion done by WMIC, PowerShell, or MpCmdRun.exe"
+author = "Parth Jamodkar"
+strings:
+$cmd = "WMIC /NAMESPACE: \root\Microsoft\Windows \Defender PATH MSFT_MpPreference call Add ExclusionPath="
+$path = ".exe"
+$powershell = "New-Object -ComObject Microsoft.Defender.Configuration.MpPreference"
+$mpcmdrun = "MpCmdRun.exe -AddExclusionPath"
+condition:
+$cmd or $powershell or $mpcmdrun and $path and not $whitelisted_location # Commented out
+}
+
+Note: 
+The whitelisted_location variable is a list of locations that are known to be safe. The rule will only match commands that are executed from a location that is not in the whitelisted_location list. [ As of now whitelisted_location is Commented out ]
+
+If you encounter any false positives or need further assistance, please provide additional information and context for analysis and refinement of the detection rule.
