@@ -27,7 +27,7 @@ rule GhostWriter_CobaltStrike_PicassoLoader
 {
     meta:
         description = "Detects activity related to GhostWriter group using Cobalt Strike and PicassoLoader"
-        author = "Your Name"
+        author = "Parth J"
         date = "2023-06-17"
     
     strings:
