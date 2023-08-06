@@ -18,22 +18,25 @@ Genuine domain names generally have a mix of letters and numbers and often inclu
 Detection Rule : 
 
 rule DetectDGADomain {
-meta:
-description = "This rule detects DGA domains using Shannon entropy analysis and additional checks."
-severity = "Medium"
+  meta:
+    description = "This rule detects DGA domains using Shannon entropy analysis and additional checks."
+    severity = "Medium"
 
-strings:
-$tlds = ".com" ".net" ".org" ".info" ".co" ".uk" ".de" ".fr" ".cn" ".ru" // Add more TLDs as needed
-condition:
-// Only look at domains with at least 6 characters.
-for any i in (1..#domain_name-6):
-(
-// Adjust threshold based on experimentation with your data
-(shannon_entropy(domain_name[i..]) > 3.0) and
-// Ensure domains have a mix of letters and numbers
-(domain_name[i..] nocase regex /[a-zA-Z].*[0-9].*|[0-9].*[a-zA-Z].*/) and
-// Require at least one non-alphanumeric character
-(domain_name[i..] nocase regex /[!@#$%^&(),.?":{}|<>]./
-)
-and ($tlds contains domain_suffix[i..])
+  strings:
+    $tlds = ".com" ".net" ".org" ".info" ".co" ".uk" ".de" ".fr" ".cn" ".ru"
+    $additional_tlds = ".io" ".xyz" ".app" ".online" ".site" ".club" ".blog" ".tech"
+    $possible_tlds = $tlds + $additional_tlds
+
+  condition:
+    // Only look at domains with at least 6 characters.
+    for any i in (1..#domain_name-6):
+      (
+        // Adjust threshold based on experimentation with your data
+        (shannon_entropy(domain_name[i..]) > 3.0) and
+        // Ensure domains have a mix of letters and numbers
+        (domain_name[i..] nocase regex /[a-zA-Z].*[0-9]|[0-9].*[a-zA-Z]/) and
+        // Require at least one non-alphanumeric character
+        (domain_name[i..] nocase regex /.*[!@#$%^&(),.?":{}|<>].*/)
+      )
+      and ($possible_tlds contains domain_suffix[i..])
 }
