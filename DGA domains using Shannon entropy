@@ -1,0 +1,39 @@
+Detection Name: DGA Domain Detection with Shannon Entropy Analysis
+Technique ID: T1568.002
+Technique Name: Domain Generation Algorithm (DGA) Detection
+Detection Intent: To identify suspicious domain names generated using Domain Generation Algorithms (DGAs) associated with Technique ID T1568.002.
+Author: Parth Jamodkar
+
+Description:
+This rule specifically targets Technique ID T1568.002, which refers to DGAs used by adversaries to dynamically generate domain names for command and control (C2) and other malicious purposes. The rule leverages Shannon entropy analysis to detect domain names with high randomness, a common characteristic of DGA-generated domains. Additionally, it includes checks to ensure the presence of a mix of letters and numbers, as well as at least one non-alphanumeric character in the domain name.
+
+Impact:
+The rule enhances the detection of potential threats related to Technique ID T1568.002, where adversaries employ DGAs to generate a large number of seemingly random domain names. Detecting and blocking such domains can disrupt C2 communication and prevent the execution of malicious commands, thus reducing the impact of cyber attacks.
+
+True Positive Analysis:
+
+Legitimate domain names with meaningful words and phrases are unlikely to trigger this rule, as they tend to have lower Shannon entropy values.
+Genuine domain names generally have a mix of letters and numbers and often include non-alphanumeric characters such as hyphens or underscores.
+
+Detection Rule : 
+
+rule DetectDGADomain {
+meta:
+description = "This rule detects DGA domains using Shannon entropy analysis and additional checks."
+severity = "Medium"
+
+strings:
+$tlds = ".com" ".net" ".org" ".info" ".co" ".uk" ".de" ".fr" ".cn" ".ru" // Add more TLDs as needed
+condition:
+// Only look at domains with at least 6 characters.
+for any i in (1..#domain_name-6):
+(
+// Adjust threshold based on experimentation with your data
+(shannon_entropy(domain_name[i..]) > 3.0) and
+// Ensure domains have a mix of letters and numbers
+(domain_name[i..] nocase regex /[a-zA-Z].*[0-9].*|[0-9].*[a-zA-Z].*/) and
+// Require at least one non-alphanumeric character
+(domain_name[i..] nocase regex /[!@#$%^&(),.?":{}|<>]./
+)
+and ($tlds contains domain_suffix[i..])
+}
