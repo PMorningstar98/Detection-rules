@@ -1,0 +1,38 @@
+title: Suspicious sqlwriter.exe Execution Indicative of DLL Side-Loading
+id: 9b8c7a42-1c44-4e7b-b6d2-apt29-sqlwriter-sideload
+status: experimental
+description: >
+  Detects execution of sqlwriter.exe from non-standard directories,
+  consistent with DLL side-loading of vcruntime140.dll as observed
+  in WINELOADER (APT29 / Cozy Bear) activity.
+references:
+  - https://www.zscaler.com/blogs/security-research/european-diplomats-targeted-apt29-cozy-bear-wineloader
+  - https://research.splunk.com/endpoint/2ed89ba9-c6c7-46aa-9f08-a2a1c2955aa3/
+author: Parth Jamodkar
+date: 2026-01-05
+tags:
+  - attack.execution
+  - attack.defense_evasion
+  - attack.t1574.002   # DLL Side-Loading
+  - attack.t1036       # Masquerading
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_image:
+    Image|endswith: '\sqlwriter.exe'
+  selection_suspicious_path:
+    Image|contains:
+      - '\Windows\Tasks\'
+      - '\Temp\'
+      - '\AppData\'
+      - '\ProgramData\'
+      - '\Users\Public\'
+  filter_legitimate_path:
+    Image|contains:
+      - '\Program Files\Microsoft SQL Server\'
+  condition: selection_image and selection_suspicious_path and not filter_legitimate_path
+falsepositives:
+  - Custom SQL Server installations running from non-default paths (rare)
+  - Administrator testing or forensic extraction of binaries
+level: high
